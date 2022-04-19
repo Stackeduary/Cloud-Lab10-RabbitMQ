@@ -13,11 +13,9 @@ username = "admin"
 password = "wabbit1"
 credentials = pika.PlainCredentials(username, password)
 
-routing_key = "iotdevice.SENDEWICZ.tempsensor"
 exchange = "SENDEWICZ"
-queue_name = "puhatu_queue"
-output_routing_key = "tag.#"
-output_queue_name = "tag_queue"
+queue_name = "tag_queue"
+# output_queue_name = "tag_queue"
 
 connection = pika.BlockingConnection(pika.ConnectionParameters(
     host=broker_host,
@@ -30,26 +28,29 @@ channel = connection.channel()
 
 # durable=True means that data is queued even if there is currently no listener
 # durable=True means that the queue will survive a broker restart (Copilot suggestion)
-channel.queue_declare(queue=output_queue_name, durable=True)
 
-routing_key = "iotdevice.*.tempsensor"
-
-channel.queue_bind(exchange=exchange, queue=output_queue_name, routing_key=output_routing_key)
+# indoor
+channel.queue_declare(queue="indoor_queue", durable=True)
+channel.queue_bind(exchange=exchange, queue="indoor_queue", routing_key="indoor.#")
+# outdoor
+channel.queue_declare(queue="outdoor_queue", durable=True)
+channel.queue_bind(exchange=exchange, queue="outdoor_queue", routing_key="outdoor.#")
 
 indoor = ['fipy_e1', 'fipy_b1', 'fipy_b2', 'fipy_b3']
 outdoor = ['puhatu_b1', 'puhatu_b2', 'puhatu_b3', 'puhatu_c1', 'puhatu_c2', 'puhatu_c3', 'puhatu_l1']
 
 def lab_callback(ch, method, properties, body):
-    output_routing_key = f"tag.{method.routing_key}"
     message = json.loads(body.decode())
-    if message['dev_id'] in indoor:
-        parsed_message = {"message": message, "dev_location": "indoor"}
-    elif message['dev_id'] in outdoor:
-        parsed_message = {"message": message, "dev_location": "outdoor"}
-    parsed_message_string = json.dumps(parsed_message)
-    print(f" [x] Received {body.decode()}")
-    print(f"Inbox: {body.decode()}")
+    if message['message']['dev_id'] in indoor and (message['message']['dist'] > 35 or message['message']['air_Temp_float'] > 25):
+        print(f"The {message['message']['dev_id']} IoT device has anomalous data. Please check the device.")
+        print(json.dumps(message))
+        output_routing_key = "indoor.tag.puhatu.SENDEWICZ.raw"
+    else:
+#        print("No anomaly was found.")
+        output_routing_key = "outdoor.tag.puhatu.SENDEWICZ.raw"
+    parsed_message_string = json.dumps(message)
     ch.basic_publish(exchange=exchange, routing_key=output_routing_key, body=parsed_message_string)
+
 
 channel.basic_consume(queue=queue_name, on_message_callback=lab_callback)
 channel.start_consuming()

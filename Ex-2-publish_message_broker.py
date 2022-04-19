@@ -1,4 +1,4 @@
-# This is the broker
+# this is the broker
 
 import pika
 import random
@@ -15,12 +15,12 @@ credentials = pika.PlainCredentials(username, password)
 
 connection = pika.BlockingConnection(pika.ConnectionParameters(
     host=broker_host,
-    port=broker_port, 
+    port=broker_port,
     credentials=credentials))
 
-# creates a new channel through which we can 
-# send data to and listen to data from the RabbitMQ broker 
-channel = connection.channel() 
+# creates a new channel through which we can
+# send data to and listen to data from the RabbitMQ broker
+channel = connection.channel()
 
 while True:
     message = {
@@ -39,7 +39,7 @@ while True:
         routing_key = routing_key,
         body = message_str
     )
-    print(f" [x] Sent {message_str}")
+    print(f"[x] Sent {message_str}")
     time.sleep(5)
 
 channel.close()

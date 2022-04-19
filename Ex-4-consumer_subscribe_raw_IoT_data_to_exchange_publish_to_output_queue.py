@@ -39,17 +39,8 @@ channel.queue_bind(exchange=exchange, queue="outdoor_queue", routing_key="outdoo
 indoor = ['fipy_e1', 'fipy_b1', 'fipy_b2', 'fipy_b3']
 outdoor = ['puhatu_b1', 'puhatu_b2', 'puhatu_b3', 'puhatu_c1', 'puhatu_c2', 'puhatu_c3', 'puhatu_l1']
 
-# def lab_callback(ch, method, properties, body):
-#     # output_routing_key = f"tag.{method.routing_key}"
-#     message = json.loads(body.decode())
-#     if message['dev_location'] in indoor:
-#         output_routing_key = f"indoor.{method.routing_key}"
-#     elif message['dev_location'] in outdoor:
-#         output_routing_key = f"outdoor.{method.routing_key}"
-#     parsed_message_string = json.dumps(message)
-#     ch.basic_publish(exchange=exchange, routing_key=output_routing_key, body=parsed_message_string)
-
 def lab_callback(ch, method, properties, body):
+#    output_routing_key = f"tag.{method.routing_key}"
     message = json.loads(body.decode())
     if message['message']['dev_id'] in indoor:
         output_routing_key = "indoor.tag.puhatu.SENDEWICZ.raw"
@@ -57,7 +48,6 @@ def lab_callback(ch, method, properties, body):
         output_routing_key = "outdoor.tag.puhatu.SENDEWICZ.raw"
     parsed_message_string = json.dumps(message)
     ch.basic_publish(exchange=exchange, routing_key=output_routing_key, body=parsed_message_string)
-
 
 channel.basic_consume(queue=queue_name, on_message_callback=lab_callback)
 channel.start_consuming()

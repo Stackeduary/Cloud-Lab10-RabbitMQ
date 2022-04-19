@@ -37,6 +37,8 @@ channel.queue_bind(exchange=exchange, queue=queue_name, routing_key=output_routi
 # read a CSV using a pandas dataframe
 df = pd.read_csv("https://courses.cs.ut.ee/2022/cloud/spring/uploads/Main/puhatu.csv")
 
+df = df.sample(len(df))
+
 messages = json.loads(df.to_json(orient="records"))
 
 for i in range(len(messages)):
